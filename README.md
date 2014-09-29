@@ -1,4 +1,4 @@
 otclient-utils
 ==============
 
-Basic helper utility function as one module.
+Basic helper utility to easy work gethered as one module.
