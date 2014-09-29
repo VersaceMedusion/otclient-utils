@@ -1,2 +1,4 @@
 /.project/otclient-utils.sublime-workspace
 /.project/otclient-utils.sublime-project
+*~
+!.gitignore
