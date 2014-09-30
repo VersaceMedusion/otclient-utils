@@ -8,10 +8,73 @@
 	"buffers":
 	[
 		{
-			"file": "otclient-utils.sublime-workspace",
 			"settings":
 			{
-				"buffer_size": 1750,
+				"buffer_size": 0,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "--[[\n  @Authors: Ukzz (Chemik)\n  @Details: Other utils like shourtcuts.\n]]\n\nstrfind = string.find\nstrrep = string.rep\nstrsub = string.sub\ntabsort = table.sort\ntostr = tostring\ncout = io.write\ncin = io.read\npout = print\n\nfunction printf(str, ...)\n  print(string.formats(str, ...))\nend\n\nfunction perror(str, ...)\n  print(string.formats(\"[ERROR]: \"..str, ...))\nend\n\nfunction pdmesg(str, ...)\n  print(string.formats(\"[DMESG]: \"..str, ...))\nend\n\nfunction switch(t)\n  t.case = function (self, x)\n    local f=self[x] or self.default\n    if(f ~= nil) then\n      if(type(f) == \"function\") then\n        f(x, self)\n      else\n        error(\"case \"..tostring(x)..\" not a function\")\n      end\n    end\n  end\n  return t\nend",
+			"file": "/home/ukzz/GitHub/otclient-utils/data/other-utils.lua",
+			"file_size": -1,
+			"file_write_time": -1,
+			"settings":
+			{
+				"buffer_size": 708,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "--[[\n  @Authors: Ukzz (Chemik)\n  @Details: Table utils like table format\n            output prints or wrappers.\n]]\n\nfunction table.find(tbl, value, careful)\n    local sensitive = (type(careful) ~= \"boolean\" or not careful) and false or true\n    \n    if(not sensitive and type(value) == \"string\")then\n        for i, v in pairs(tbl) do\n            if(type(v) == \"string\") then\n                if(v:lower() == value:lower()) then\n                    return i\n                end\n            end\n        end\n        return false\n    end\n    for i, v in pairs(tbl) do\n        if(v == value) then\n            return i\n        end\n    end\n    return false\nend\n\nfunction table.contains(t, value, index)\n    for n = 1, #t do\n        local c = t[n]\n        if(type(c) == 'table') and (type(value) ~= 'table') and (index) then\n            if(c[index] == value)then\n                return c, n\n            end\n        elseif(c == value)then\n            return c, n\n        end\n    end\n    return false\nend\n\nfunction table.serialize(x, recur)\n    local t = type(x)\n    recur = recur or {}\n    if(t == nil) then\n        return \"nil\"\n    elseif(t == \"string\") then\n        return string.format(\"%q\", x)\n    elseif(t == \"number\") then\n        return tostring(x)\n    elseif(t == \"boolean\") then\n        return x and \"true\" or \"false\"\n    elseif(getmetatable(x)) then\n        error(\"Can not serialize a table that has a metatable associated with it.\")\n    elseif(t == \"function\") then\n    return tostring(x)\n    elseif(t == \"table\") then\n        if(table.find(recur, x)) then\n            error(\"Can not serialize recursive tables.\")\n        end\n        table.insert(recur, x)\n        local s = \"{\"\n        for k, v in pairs(x) do\n            s = s .. \"[\" .. table.serialize(k, recur) .. \"]\" .. \" = \" .. table.serialize(v, recur) .. \", \"\n        end\n        return s:sub(0, s:len() - 2) .. \"}\"\n    end\n    error(\"Can not serialize value of type '\" .. t .. \"'.\")\nend\n\nfunction table.unserialize(str)\n    return loadstring(\"return \" .. str)()\nend\n\nfunction table.binaryfind(self, v, a)\n  local index, range = 1, #self\n  while index <= range do\n    local mid = math.floor((range + index) / 2)\n    if (self[mid][a] or self[mid]) == v then\n      return mid\n    elseif (self[mid][a] or self[mid]) > v then\n      range = mid - 1\n    else\n      index = mid + 1\n    end\n  end\n  return nil\nend\n\nfunction table.each(self, f, p)\n  if p then\n    return table.foreach(self, f)\n  else\n    return table.foreachi(self, f)\n  end\n  return self\nend\n\nfunction table.lower(self)\n  local i = 1\n  while #self >= i do\n    local str = self[i]\n    if type(str) == \"string\" then\n      self[i], i = str:lower(), i + 1\n    else\n      table.remove(self, i)\n    end\n  end\n  return self\nend\n\nfunction table.upper(self)\n  local i = 1\n  while #self >= i do\n    local str = self[i]\n    if type(str) == \"string\" then\n      self[i], i = str:upper(), i + 1\n    else\n      table.remove(self, i)\n    end\n  end\n  return self\nend\n\nfunction table.id(self)\n  local i = 1\n  while #self >= i do\n    if type(self[i]) == \"number\" and self[i] > 0 then\n      i = i + 1\n    elseif type(self[i]) == \"string\" then\n      local id = itemid(self[i])\n      if id > 0 then\n        self[i], i = id, i + 1\n      else\n        table.remove(self, i)\n      end\n    else\n      table.remove(self, i)\n    end\n  end\n  return self\nend\n\nfunction table.include(self, value, argument)\n  for k, v in ((argument and pairs) or ipairs)(self) do\n    if (argument and v[argument] == value) or v == value then\n      return k\n    end\n  end\n  return nil\nend\n\nfunction table.unpack(self)\n  local temp = {}\n  for _, v in pairs(self) do\n    table.insert(temp, v)\n  end\n  return unpack(temp)\nend\n\nfunction table.tostring(self, sep)\n  local sep, str = sep or ' ', ''\n  for k, v in pairs(self) do\n    local t, n = type(v), tonumber(k)\n    if t == 'string' then\n      str = str .. string.format(\"%s,%s\", (n ~= nil and string.format('\"%s\"', v)) or string.format('%s = \"%s\"', k, v), sep)\n    elseif t == 'number' then\n      str = str .. string.format(\"%s,%s\", (n ~= nil and v) or string.format(\"%s = %s\", k, v), sep)\n    elseif t == 'table' then\n      str = str .. string.format(\"%s,%s\", (n ~= nil and table.tostring(v)) or string.format(\"%s = %s\", k, table.tostring(v)), sep)\n    end\n  end\n  local temp = string.format(\"{%s}\", str):gsub(\",}\", '}'):gsub(\", }\", '}')\n  return temp\nend\n\nfunction printTable(table, indent)\n  local sort = table.sort\n  indent = indent or 0;\n  local keys = {};\n  for k in pairs(table) do\n    keys[#keys+1] = k;\n    tabsort(keys, function(a, b)\n      local ta, tb = type(a), type(b);\n      if (ta ~= tb) then\n        return ta < tb;\n      else\n        return a < b;\n      end\n    end);\n  end\n\n  print(string.rep('  ', indent)..'{');\n  indent = indent + 1;\n  for k, v in pairs(table) do\n    local key = k;\n    if (type(key) == 'string') then\n      if not (string.match(key, '^[A-Za-z_][0-9A-Za-z_]*$')) then\n        key = \"['\"..key..\"']\";\n      end\n    elseif (type(key) == 'number') then\n      key = \"[\"..key..\"]\";\n    end\n\n    if (type(v) == 'table') then\n      if (next(v)) then\n        printf(\"%s%s =\", string.rep('  ', indent), tostring(key));\n        printTable(v, indent);\n      else\n        printf(\"%s%s = {},\", string.rep('  ', indent), tostring(key));\n      end \n    elseif (type(v) == 'string') then\n      printf(\"%s%s = %s,\", string.rep('  ', indent), tostring(key), \"'\"..v..\"'\");\n    else\n      printf(\"%s%s = %s,\", string.rep('  ', indent), tostring(key), tostring(v));\n    end\n  end\n  indent = indent - 1;\n  print(string.rep('  ', indent)..'}');\nend",
+			"file": "/home/ukzz/GitHub/otclient-utils/data/table-utils.lua",
+			"file_size": -1,
+			"file_write_time": -1,
+			"settings":
+			{
+				"buffer_size": 5580,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "te",
+			"settings":
+			{
+				"buffer_size": 2,
+				"line_ending": "Unix",
+				"name": "te"
+			}
+		},
+		{
+			"contents": "--[[\n  @Authors: Ukzz (Chemik)\n  @Details: String utils like table format\n            or new wrapers functions.\n]]\n\nfunction string.formats(str, ...)\n  return (#{...} > 0 and str:format(...) or str)\nend\n\nfunction string:titlecase()\n    return self:gsub(\"(%a)([%w_']*)\", function(first, rest) return first:upper()..rest:lower() end)\nend\n\nfunction string:split(s)\n    local s, tbl = s or \" \", {}\n    self:gsub(string.format(\"([^%s]+)\", s), function(c) tbl[#tbl+1] = c end)\n    return tbl\nend\n\nfunction string:trim()\n  return self:gsub(\"^%s*(.-)%s*$\", \"%1\")\nend\n\nfunction string:wordcount()\n    local n = 0\n    self:gsub(\"(%w+)\", function() n = n + 1 end)\n    return n\nend\n\nfunction string.ucwords(self)\n  return self:gsub(\"(%a)([%w_']*)\", function(a, b) return a:upper() .. b:lower() end)\nend\n\nfunction string.explode(self, sep)\n  local parts, i = {}, 1\n  local start, finish = string.find(self, sep, i)\n\n  while (start) do\n    table.insert(parts, string.sub(self, i, start - 1))\n\n    i = finish + 1\n    start, finish = string.find(self, sep, i)\n  end\n\n  table.insert(parts, string.sub(self, i))\n\n  return parts\nend\n\nfunction string.fit(self, size)\n  return ((type(size) == 'string' and #size or size) - #self) < 0 and self:sub(1, (type(size) == 'string' and #size or size)) .. '...'\nend",
+			"file": "/home/ukzz/GitHub/otclient-utils/data/string-utils.lua",
+			"file_size": -1,
+			"file_write_time": -1,
+			"settings":
+			{
+				"buffer_size": 1285,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "{\n	\"folders\":\n	[\n		{\n			\"follow_symlinks\": true,\n			\"path\": \"/home/ukzz/GitHub/otclient-utils\"\n		}\n	]\n}\n",
+			"file": "otclient-utils.sublime-project",
+			"file_size": -1,
+			"file_write_time": -1,
+			"settings":
+			{
+				"buffer_size": 104,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "--[[\n  @Authors: Ukzz (Chemik)\n  @Details: Improves terminal with better\n  			printing and debugging.\n]]\n\nlocal function showNext(t, ...)\n	print(\"showNext\")\nend",
+			"file": "/home/ukzz/GitHub/otclient-utils/extends/client-terminal.lua",
+			"file_size": -1,
+			"file_write_time": -1,
+			"settings":
+			{
+				"buffer_size": 160,
 				"line_ending": "Unix"
 			}
 		}
@@ -41,9 +104,14 @@
 		"side_bar_visible": false,
 		"status_bar_visible": false
 	},
+	"expanded_folders":
+	[
+		"/home/ukzz/GitHub/otclient-utils"
+	],
 	"file_history":
 	[
-		"/home/ukzz/GitHub/otclient-utils/.project/otclient-utils.sublime-workspace"
+		"/home/ukzz/GitHub/otclient-utils/.project/otclient-utils.sublime-workspace",
+		"/home/ukzz/GitHub/otclient-utils/.project/otclient-utils.sublime-project"
 	],
 	"find":
 	{
@@ -78,33 +146,207 @@
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 6,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "otclient-utils.sublime-workspace",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1750,
+						"buffer_size": 0,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								227,
-								227
+								0,
+								0
 							]
 						],
 						"settings":
 						{
-							"syntax": "Packages/Text/Plain text.tmLanguage",
-							"translate_tabs_to_spaces": false
+							"default_dir": "/home/ukzz/GitHub/otclient-utils/data",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 225.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/home/ukzz/GitHub/otclient-utils/data/other-utils.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 708,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								219,
+								219
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Lua/Lua.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/home/ukzz/GitHub/otclient-utils/data/table-utils.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5580,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								964,
+								964
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Lua/Lua.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 540.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2,
+								2
+							]
+						],
+						"settings":
+						{
+							"auto_name": "te",
+							"default_dir": "/home/ukzz/GitHub/otclient-utils/.project/extends",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/home/ukzz/GitHub/otclient-utils/data/string-utils.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1285,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Lua/Lua.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "otclient-utils.sublime-project",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 104,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								98,
+								98
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JSON.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "/home/ukzz/GitHub/otclient-utils/extends/client-terminal.lua",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 160,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								160,
+								160
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Lua/Lua.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -119,7 +361,7 @@
 	},
 	"input":
 	{
-		"height": 0.0
+		"height": 31.0
 	},
 	"layout":
 	{
